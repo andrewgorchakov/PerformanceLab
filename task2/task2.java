@@ -23,7 +23,7 @@ class Point {
 
 public class task2 {
 
-    private final static double EPS = 0.000001; // точность сравнения близких точек
+    private final static double EPS = 0.0001; // точность сравнения площадей и близких точек
     private final static int N = 4; // количество вершин
 
     // уточнение близких точек
@@ -107,6 +107,37 @@ public class task2 {
         return false;
     }
 
+    // вычисление площади треугольника
+    private static double calculateArea3(double xA, double yA, double xB, double yB, Point p) {
+        Point[] points = new Point[4];
+        points[0] = new Point(xA, yA);
+        points[1] = new Point(xB, yB);
+        points[2] = p;
+        points[3] = new Point(xA, yA);
+
+        double sum = 0.0;
+        for (int i = 0; i < points.length - 1; ++i) {
+            sum += (points[i].x * points[i + 1].y) - (points[i + 1].x * points[i].y);
+        }
+        return Math.abs(sum / 2);
+    }
+
+    // вычисление площади четырехугольника
+    private static double calculateArea4(double xA, double yA, double xB, double yB, double xC, double yC, double xD, double yD) {
+        Point[] points = new Point[5];
+        points[0] = new Point(xA, yA);
+        points[1] = new Point(xB, yB);
+        points[2] = new Point(xC, yC);
+        points[3] = new Point(xD, yD);
+        points[4] = new Point(xA, yA);
+
+        double sum = 0.0;
+        for (int i = 0; i < points.length - 1; ++i) {
+            sum += (points[i].x * points[i + 1].y) - (points[i + 1].x * points[i].y);
+        }
+        return Math.abs(sum / 2);
+    }
+
     public static void main(String[] args) {
 
 //        String filePolygon = "C:\\Java_projects\\PerformanceLab\\task2\\src\\file1";
@@ -127,7 +158,6 @@ public class task2 {
         double x1, y1, x2, y2, x3, y3, x4, y4, x, y;
 
         // полигон
-        // будем хранить его в массиве x и y
         x1 = listPolygon.get(0).x;
         y1 = listPolygon.get(0).y;
         x2 = listPolygon.get(1).x;
@@ -136,12 +166,14 @@ public class task2 {
         y3 = listPolygon.get(2).y;
         x4 = listPolygon.get(3).x;
         y4 = listPolygon.get(3).y;
-        double[] xPolygon = {x1, x2, x3, x4};
-        double[] yPolygon = {y1, y2, y3, y4};
+        //double[] xPolygon = {x1, x2, x3, x4};
+        //double[] yPolygon = {y1, y2, y3, y4};
 
 
         // обработка точек из списка
         for (Point p : listPoints) {
+
+            //System.out.println(p);
 
             boolean ISINPOLYGON = false; // флаг принадлежности полигону
             boolean ISINLINE = false; // флаг принадлежности линии
@@ -162,7 +194,19 @@ public class task2 {
 
             // Если точка не на вершине - проверим принадлежность полигону и линиям
             // 1. принадлежит полигону - устанавливаем флаг в true
-            if (inPolygon(xPolygon, yPolygon, x, y)) ISINPOLYGON = true;
+            // Используем метод сравнения площадей:
+            // если равны площади суммы треугольников, образованных точкой и четырьмя точками
+            // четырехуголтника и площади четырехугольника - то точка принадлежит полигону
+            double S_sumTriangles = calculateArea3(x1, y1, x2, y2, p) + calculateArea3(x2, y2, x3, y3, p) + calculateArea3(x3, y3, x4, y4, p) +
+                    calculateArea3(x4, y4, x1, y1, p);
+            //System.out.println("S_Triangl = " + S_sumTriangles);
+            double S_Polygon = calculateArea4(x1, y1, x2, y2, x3, y3, x4, y4);
+            //System.out.println("S_Polygon = " + S_Polygon);
+
+            //if (inPolygon(xPolygon, yPolygon, x, y)) ISINPOLYGON = true;
+
+            // сравниваем площади учитывая допустимую погрешность эпсилон
+            if ((Math.abs(S_Polygon - S_sumTriangles)) <= EPS) ISINPOLYGON = true;
 
             // 2. принадлежит линии - устанавливаем флаг в true
             if (
@@ -181,7 +225,7 @@ public class task2 {
             // делаем вывод по комбинации флагов
             if (ISINPOLYGON && ISINLINE) System.out.println("1"); // "точка на одной из сторон"
             if (ISINPOLYGON && !ISINLINE) System.out.println("2"); // "принадлежит многоугольнику"
-            if (!ISINPOLYGON && ISINLINE) System.out.println("1"); // "Точка на одной из сторон"
+            if (!ISINPOLYGON && ISINLINE) System.out.println("3"); // "Не принадлежит многоугольнику"
             if (!ISINPOLYGON && !ISINLINE) System.out.println("3"); // "Не принадлежит многоугольнику"
 
             //System.out.println();
